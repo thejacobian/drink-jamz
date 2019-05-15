@@ -1,21 +1,21 @@
-// set up our mongo db connection and require mongoose
 const mongoose = require('mongoose');
 
-// Connect mongoosed and specify db name
-mongoose.connect('mongodb://localhost/cocktails', {
+const connectionString = process.env.REACT_APP_MONGODB_URI;
+
+mongoose.connect(connectionString, {
   useNewUrlParser: true,
   useCreateIndex: true,
-  useFindAndModify: false
+  useFindAndModify: false,
 });
 
 mongoose.connection.on('connected', () => {
-  console.log('Mongoose is connected')
+  console.log('mongoose connected to ', connectionString);
 });
 
-mongoose.connection.on('disconncted', () => {
-  console.log('Mongoose is disconnected')
+mongoose.connection.on('disconnected', () => {
+  console.log('mongoose disconnected to ', connectionString);
 });
 
-mongoose.connection.on('error', (err) => {
-  console.log(err, ': Mongoose failed to connect')
+mongoose.connection.on('error', (error) => {
+  console.log('mongoose error ', error);
 });

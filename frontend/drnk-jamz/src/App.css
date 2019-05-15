@@ -6,6 +6,8 @@
   /* animation: App-logo-spin infinite 20s linear; */
   /* height: 40vmin; */
   pointer-events: none;
+  /* border: 0.2em solid rgb(0,196,85);
+  border-radius: 2em; */
 }
 
 .App-header {
@@ -66,6 +68,7 @@ body {
   padding: 0.7em 1.5em;
   text-transform: uppercase;
   transition: all 0.25s ease;
+  text-decoration: none;
 }
 
 .btn:hover {
@@ -74,11 +77,10 @@ body {
 }
 
 .btn--login {
-  margin: 0 auto;
+  margin: 2em 2em;
 }
 
 /** Background **/
-
 .background {
   left: 0;
   right: 0;
@@ -114,7 +116,6 @@ body {
 
 /** Player CSS **/
 /** Now Playing **/
-
 .now-playing__name {
   font-size: 1.5em;
   margin-bottom: 0.2em;
@@ -158,3 +159,9 @@ body {
   background-color: #eee;
   height: 4px;
 }
+
+/* .now-playing__bio {
+  display: "block";
+  width: 50%;
+  height: 50%;
+} */
