@@ -1,3 +1,6 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-prototype-builtins */
+/* eslint-disable no-restricted-syntax */
 /* eslint-disable max-len */
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-underscore-dangle */
@@ -10,32 +13,29 @@ const Cocktail = require('../models/cocktail');
 // // add require login middleware
 // const requireLogin = require('../middleware/requireLogin');
 
-// // helper function to randomize array from Stack Overflow
-// /**
-//  * Randomize array element order in-place.
-//  * Using Durstenfeld shuffle algorithm.
-//  */
-// const shuffleArray = (array) => {
-//   for (let i = array.length - 1; i > 0; i--) {
-//     const j = Math.floor(Math.random() * (i + 1));
-//     const temp = array[i];
-//     array[i] = array[j];
-//     array[j] = temp;
-//   }
-// };
+// Utility function from Stack Overflow to see if an object is empty
+const isEmpty = (obj) => {
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) { return false; }
+  }
+  return true;
+};
 
-// // INDEX ROUTE for debugging/admin purposes
-// router.get('/', async (req, res) => {
-//   try {
-//     const allCocktails = await Cocktail.find({}).sort('name');
-//     res.render('cocktails/index.ejs', {
-//       cocktails: allCocktails,
-//     });
-//   } catch (err) {
-//     console.log(err);
-//     res.send(err);
-//   }
-// });
+// INDEX ROUTE for debugging/admin purposes
+router.get('/', async (req, res) => {
+  try {
+    const cocktails = await Cocktail.find().sort();
+    res.json({
+      data: cocktails,
+      status: 200,
+    });
+  } catch (err) {
+    res.json({
+      status: 500,
+      data: err,
+    });
+  }
+});
 
 // // NEW ROUTE
 // router.get('/new', async (req, res) => {
@@ -69,19 +69,28 @@ const Cocktail = require('../models/cocktail');
 //   }
 // });
 
-// // CREATE ROUTE
-// router.post('/', async (req, res) => {
-//   try {
-//     // create new cocktail
-//     const newCocktail = await Cocktail.create(req.body);
-//     await newCocktail.save();
-//     console.log(newCocktail, 'after creation!!!');
-//     res.redirect('/cocktails');
-//   } catch (err) {
-//     console.log(err);
-//     res.send(err);
-//   }
-// });
+// CREATE ROUTE
+router.post('/', async (req, res) => {
+  try {
+    console.log(req.body);
+
+    // handle genres for new cocktail
+    const temp = req.body.genres;
+    req.body.genres = [];
+    req.body.genres.push(temp);
+
+    const newCocktail = await Cocktail.create(req.body);
+    res.json({
+      status: 200,
+      data: newCocktail,
+    });
+  } catch (err) {
+    res.json({
+      status: 500,
+      data: err,
+    });
+  }
+});
 
 // // EDIT ROUTE
 // router.get('/:id/edit', async (req, res) => {
@@ -105,27 +114,103 @@ const Cocktail = require('../models/cocktail');
 //   }
 // });
 
-// // UPDATE ROUTE
-// router.put('/:id', async (req, res) => {
-//   try {
-//     const updatedCocktail = await Cocktail.findByIdAndUpdate(req.params.id, req.body, { new: true });
-//     await updatedCocktail.save();
-//     res.redirect(`/cocktails/${req.params.id}`);
-//   } catch (err) {
-//     console.log(err);
-//     res.send(err);
-//   }
-// });
+// UPDATE ROUTE
+router.put('/', async (req, res) => {
+  try {
+    // handle genres for new cocktail
+    const temp = req.body.genres;
+    req.body.genres = [];
+    req.body.genres.push(temp);
 
-// // DELETE ROUTE
-// router.delete('/:id', async (req, res) => {
-//   try {
-//     const deletedCocktail = await Cocktail.findByIdAndDelete(req.params.id);
-//     console.log(deletedCocktail);
-//   } catch (err) {
-//     console.log(err);
-//     res.send(err);
-//   }
-// });
+    console.log(req.body);
+
+    const updatedCocktail = await Cocktail.findByIdAndUpdate(req.body._id, req.body, { new: true });
+    await updatedCocktail.save();
+    res.json({
+      status: 200,
+      data: updatedCocktail,
+    });
+  } catch (err) {
+    res.json({
+      status: 500,
+      data: err,
+    });
+  }
+});
+
+// DELETE ROUTE
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedCocktail = await Cocktail.findByIdAndDelete(req.params.id);
+    console.log(deletedCocktail);
+
+    res.json({
+      status: 200,
+      data: deletedCocktail,
+    });
+  } catch (err) {
+    res.json({
+      status: 500,
+      data: err,
+    });
+  }
+});
+
+// SEARCH route
+router.post('/search', async (req, res) => {
+  try {
+    let currMatchingCocktails = [];
+    let allMatchingCocktails = [];
+
+    const artistGenres = req.body.genres;
+
+    for (let i = 0; i < artistGenres.length; i++) {
+      // const genreLowerCase = genre.toLocaleLowerCase();
+      const genreLowerCase = artistGenres[i].toLocaleLowerCase();
+      // search for exact genre matching cocktails first
+      currMatchingCocktails = await Cocktail.find({ genres: genreLowerCase });
+      // if empty search for wildcard exact genres
+      if (isEmpty(currMatchingCocktails)) {
+        currMatchingCocktails = await Cocktail.find({ genres: { $regex: genreLowerCase } });
+      }
+
+      // search for sub-genre matching cocktails split on space and dash
+      if (isEmpty(currMatchingCocktails)) {
+        const subGenres = genreLowerCase.split(/-| /);
+        for (let x = 0; x < subGenres.length; x++) {
+          if (subGenres[x] !== 'and') {
+            currMatchingCocktails = [...currMatchingCocktails, ...await Cocktail.find({ genres: { $regex: subGenres[x] } })];
+          }
+        }
+      }
+      allMatchingCocktails = [...allMatchingCocktails, ...currMatchingCocktails];
+    }
+
+    let matchingCocktail;
+    let randomCocktailIndex;
+    // just return any matching cocktail if none found by genre
+    if (isEmpty(allMatchingCocktails)) {
+      // random mongoDB item from collection found on stack overflow
+      const count = await Cocktail.count({});
+      randomCocktailIndex = Math.floor(Math.random() * count);
+      matchingCocktail = await Cocktail.findOne().skip(randomCocktailIndex).exec();
+      console.log('No matching cocktails so returning a random one!');
+    } else { // return one of the cocktails that is matching the genres
+      randomCocktailIndex = Math.floor(Math.random() * allMatchingCocktails.length);
+      matchingCocktail = allMatchingCocktails[randomCocktailIndex];
+      console.log(`Returning a random matching cocktail: ${matchingCocktail}`);
+    }
+
+    res.json({
+      data: matchingCocktail,
+      status: 200,
+    });
+  } catch (err) {
+    res.json({
+      status: 500,
+      data: err,
+    });
+  }
+});
 
 module.exports = router;

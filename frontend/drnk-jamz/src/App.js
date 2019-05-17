@@ -1,6 +1,21 @@
 import React, { Component } from "react";
-// import { Button } from "reactstrap";
-import Player from "./Player/Player";
+import { 
+  Button,
+  Collapse,
+  Form,
+  FormGroup,
+  Input,
+  Navbar,
+  NavbarToggler,
+  NavbarBrand,
+  Nav,
+  NavItem,
+  NavLink,
+ } from "reactstrap";
+import PlayerComp from "./PlayerComp/PlayerComp";
+import CocktailComp from "./CocktailComp/CocktailComp";
+import EditCocktail from "./EditCocktail/EditCocktail";
+import NewCocktail from "./NewCocktail/NewCocktail";
 import logo from "./mstile-150x150.png";
 import "./App.css";
 import { isNull, isNullOrUndefined } from "util";
@@ -18,36 +33,29 @@ const sPAuthEndpoint = 'https://accounts.spotify.com/authorize';
 const sPClientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
 const sPRedirectUri = process.env.REACT_APP_SPOTIFY_REDIRECT_URI;
 const sPScopes = [
-  'streaming',
-  'user-read-private',
-  'user-read-birthdate',
-  'user-read-email',
-  'user-library-read',
-  'user-library-modify',
-  'user-top-read',
-  'user-follow-read',
-  'user-follow-modify',
-  'user-read-playback-state',
-  'user-read-currently-playing',
-  'user-read-recently-played',
-  'playlist-read-private',
-  'playlist-read-collaborative',
-  'playlist-modify-public',
-  'playlist-modify-private',
-  // 'user-top-read',
-  // 'user-read-currently-playing',
-  // 'user-read-playback-state',
-  // 'user-modify-playback-state',
   // 'streaming',
+  // 'user-read-private',
   // 'user-read-birthdate',
   // 'user-read-email',
-  // 'user-read-private'
+  // 'user-library-read',
+  // 'user-library-modify',
+  // 'user-top-read',
+  // 'user-follow-read',
+  // 'user-follow-modify',
+  'user-modify-playback-state',
+  'user-read-playback-state',
+  'user-read-currently-playing',
+  // 'user-read-recently-played',
+  // 'playlist-read-private',
+  // 'playlist-read-collaborative',
+  // 'playlist-modify-public',
+  // 'playlist-modify-private',
 ];
 
 // MusicStory api connection variables (some from private .env)
-const mSKey = process.env.REACT_APP_MUSICSTORY_CONSUMER_KEY;
-var mSSecret = process.env.REACT_APP_MUSICSTORY_CONSUMER_SECRET;
-var mSApi = new window.MusicStoryApi(mSKey, mSSecret);
+// const mSKey = process.env.REACT_APP_MUSICSTORY_CONSUMER_KEY;
+// var mSSecret = process.env.REACT_APP_MUSICSTORY_CONSUMER_SECRET;
+// var mSApi = new window.MusicStoryApi(mSKey, mSSecret);
 
 // Helper function to get the hash of the url for spotify API comms _token
 const hash = window.location.hash
@@ -69,9 +77,16 @@ class App extends Component {
     this.state = {
       // player: null,
       token: null,
+      artist: "",
+      cocktail: null,
+      newCocktail: null,
+      updateCocktail: null,
+      artistResults: null,
       response: null,
-      device_id: null,
-      item: {
+      device: null,
+      device_id: "",
+      allDeviceIds: null,
+      nowPlaying: {
         album: {
           images: [{ url: "" }]
         },
@@ -79,14 +94,17 @@ class App extends Component {
         artists: [{ name: "" }],
         duration_ms:0,
       },
-      is_playing: "Paused",
-      progress_ms: 0
+      is_playing: "Playing",
+      progress_ms: 0,
+      js: false,
+      history: [],
     };
     this.getCurrentlyPlaying = this.getCurrentlyPlaying.bind(this);
     this.previousTrack = this.previousTrack.bind(this);
     this.nextTrack = this.nextTrack.bind(this);
     this.playTrack = this.playTrack.bind(this);
     this.pauseTrack = this.pauseTrack.bind(this);
+    this.toggleJS = this.toggleJS.bind(this);
   }
   
   // Once react page is loaded/mounted after redirect from spotify login,
@@ -107,166 +125,153 @@ class App extends Component {
 
       // call getCurrentlyPlaying API request if token is good
       await this.getCurrentlyPlaying();
+
+      // get the user deviceIds
+      await this.getDeviceIds();
+
+      // console.log(await this.state.allDeviceIds.filter((device) => device.id === this.state.device_id));
+      // this.setState ({
+      //   device: await this.state.allDeviceIds.filter((device) => device.id === this.state.device_id)
+      // });
+
+      // this.state.allDeviceIds.foreach((device) => {
+      //   if (device.id === this.state.device_id) {
+      //     this.setState ({
+      //       device: device,
+      //     });
+      //   }
+      // });
+
+      // get initial cocktail for currentlyPlaying artist on page load.
+      await this.handleSubmit(null, this.state.nowPlaying.artists[0].name);
+
+      this.setState({
+        is_playing: "Playing"
+      })
     }
   }
 
-  // onSpotifyWebPlaybackSDKReady = () => {
+  handleChange = (e) => {
+    this.setState({
+        [e.target.name]: e.target.value
+    })
+  }
 
-  //   const sPPlayer = new window.Spotify.Player({ // Spotify is not defined until 
-  //     name: 'Spotify Web Player',       // the script is loaded in 
-  //     getOAuthToken: cb => { cb(this.state.token) }
-  //   });
-  
-  //   // Error handling
-  //   sPPlayer.addListener('initialization_error', ({ message }) => { console.error(message); });
-  //   sPPlayer.addListener('authentication_error', ({ message }) => { console.error(message); });
-  //   sPPlayer.addListener('account_error', ({ message }) => { console.error(message); });
-  //   sPPlayer.addListener('playback_error', ({ message }) => { console.error(message); });
-  
-  //   // Playback status updates
-  //   sPPlayer.addListener('sPPlayer_state_changed', status => {
-  //      console.log(status);
-  //   });
-  
-  //   // Ready
-  //   sPPlayer.addListener('ready', ({ device_id }) => {
-  //     console.log('Ready with Device ID', device_id);
-  //   });
-  
-  //   // Not Ready
-  //   sPPlayer.addListener('not_ready', ({ device_id }) => {
-  //     console.log('Device ID has gone offline', device_id);
-  //   });
-  
-  //   // Connect to the sPPlayer!
-  //   sPPlayer.connect();
+  findCocktailImage = async (cId) => {
+    try{
+      const searchURL = `https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${cId}`;
+      const result = await fetch(searchURL);
+      const parsedResult = await result.json();
+      console.log(parsedResult);
+      return parsedResult.drinks[0].strDrinkThumb;
+    } catch(err) {
+      console.log(`${err} in the cocktailDB ext API call`);
+    }
+  }
 
-  //   this.setState({
-  //     player: sPPlayer
-  //   });
-  // };
+  handleSubmit = async (e, formArtist) => {
 
-  // // Make a fetch call to the spotify api using the token to pauseTrack
-  // pauseTrack = async (token) => {
-  //   try {
-  //     const url = 'https://api.spotify.com/v1/me/player/pause'
-  //     const result = await fetch(url, {
-  //       method: "PUT",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         "Authorization": `Bearer ${token}`
-  //       }
-  //     });
-  //     const parsedResult = await result.json();
-  //     if (result.status === 200) {
-  //       console.log("data:", parsedResult);
-  //       if (!isNullOrUndefined(parsedResult.item)) {
-  //         this.setState({
-  //           item: parsedResult.item,
-  //           is_playing: parsedResult.is_playing,
-  //           progress_ms: parsedResult.progress_ms,
-  //         });
-  //       } else {
-  //         console.log('parsedResponse in pauseTrack was null or undefined')
-  //       }
-  //     }
-  //   } catch(err) {
-  //     console.log(`${err} in the spotify pauseTrack fetch call`);
-  //   }
-  // }
+    await this.searchArtists(formArtist);
 
-  // // Make a fetch call to the spotify api using the token to playTrack
-  // playTrack = async (token) => {
-  //   try {
-  //     const url = 'https://api.spotify.com/v1/me/player/play'
-  //     const result = await fetch(url, {
-  //       method: "PUT",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         "Authorization": `Bearer ${token}`
-  //       },
-  //       body: {
-  //         "context_uri": this.state.item.album.uri,
-  //         "offset": {
-  //           "position": 5
-  //         },
-  //         "position_ms": 0
-  //       }
-  //     });
-  //     const parsedResult = await result.json();
-  //     if (result.status === 200) {
-  //       console.log("data:", parsedResult);
-  //       if (!isNullOrUndefined(parsedResult.item)) {
-  //         this.setState({
-  //           item: parsedResult.item,
-  //           is_playing: parsedResult.is_playing,
-  //           progress_ms: parsedResult.progress_ms,
-  //         });
-  //       } else {
-  //         console.log('parsedResponse in playTrack was null or undefined')
-  //       }
-  //     }
-  //   } catch(err) {
-  //     console.log(`${err} in the spotify playTrack fetch call`);
-  //   }
-  // }
+    if (!this.state.artist || !this.state.artistResults[0]) {
+      await this.playTrack("");
+      document.getElementById('artistSearch').value = '';
+    } else {
+      await this.playTrack(this.state.artistResults[0].uri);
+    }
 
-  // // Make a fetch call to the spotify api using the token to getCurrentlyPlaying
-  // getCurrentlyPlaying = async (token) => {
-  //   try {
-  //     const url = 'https://api.spotify.com/v1/me/player'
-  //     const result = await fetch(url, {
-  //       method: "GET",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         "Authorization": `Bearer ${token}`
-  //       }
-  //     });
-  //     const parsedResult = await result.json();
-  //     if (result.status === 200) {
-  //       console.log("data:", parsedResult);
-  //       if (!isNullOrUndefined(parsedResult.item)) {
-  //         this.setState({
-  //           item: parsedResult.item,
-  //           is_playing: parsedResult.is_playing,
-  //           progress_ms: parsedResult.progress_ms,
-  //         });
-  //       } else {
-  //         console.log('parsedResponse in spotify getCurrentlyPlaying was null or undefined')
-  //       }
-  //     }
-  //   } catch(err) {
-  //     console.log(`${err} in the spotify getCurrentlyPlaying fetch call`);
-  //   }
-  // }
+    await this.getCurrentlyPlaying();
+
+    const response = await fetch(`http://localhost:27018/api/v1/cocktails/search`, {
+      method: "POST",
+      body: JSON.stringify(this.state.artistResults[0]),
+      credentials: 'include',
+      headers: {
+          "Content-Type": "application/json"
+      }
+    });
+
+    const parsedResponse = await response.json();
+    console.log(parsedResponse);
+
+    if(parsedResponse.status === 200){
+
+      // set the cocktail.img with API call to cocktailsDB
+      if (!parsedResponse.data.img) {
+        parsedResponse.data.img = await this.findCocktailImage(parsedResponse.data.cId);
+      }
+
+      this.setState({
+          cocktail: parsedResponse,
+          artist: ""
+      });
+    }
+  }
+
+  // Make a call to the spotify ext API from getArtistResults
+  searchArtists = async (searchTerm) => {
+    await spotifyApi.searchArtists(searchTerm)
+      .then(async (response) => {
+        console.log(response);
+        this.setState({
+          artistResults: response.artists.items,
+          response: response
+        })
+      }).catch((err) => {
+        console.log(`${err} in the spotify searchArtists ext API lib call`);
+      }
+    );
+  }
+
+  // Make a call to the spotify ext API from getArtistDetails
+  getArtistDetails = async (artistId) => {
+    await spotifyApi.getArtist(artistId)
+      .then(async (response) => {
+        console.log(response);
+      }).catch((err) => {
+        console.log(`${err} in the spotify getArtistDetails ext API lib call`);
+      }
+    );
+  }
+
+    // Make a call to the spotify ext API to getAudioTrackFeatures
+  getTrackFeatures = async () => {
+    await spotifyApi.getAudioFeaturesForTrack(this.state.nowPlaying.id)
+      .then(async (response) => {
+        console.log(response);
+        setTimeout(await this.getCurrentlyPlaying, 200);
+      }).catch((err) => {
+        console.log(`${err} in the spotify getTrackFeatures ext API lib call`);
+      }
+    );
+  }
 
   // Make a call to the spotify ext API from previousTrack
   previousTrack = async () => {
-    // e.preventDefault();
     await spotifyApi.skipToPrevious()
       .then(async (response) => {
         console.log(response);
-        setTimeout(this.getCurrentlyPlaying, 200);
+        setTimeout(await this.getCurrentlyPlaying, 200);
       }).catch((err) => {
         console.log(`${err} in the spotify previousTrack ext API lib call`);
-      });
+      }
+    );
   }
 
    // Make a call to the spotify ext API from nextTrack
    nextTrack = async () => {
-    // e.preventDefault();
     await spotifyApi.skipToNext()
       .then(async (response) => {
         console.log(response);
-        setTimeout(this.getCurrentlyPlaying, 200);
+        setTimeout(await this.getCurrentlyPlaying, 200);
       }).catch((err) => {
         console.log(`${err} in the spotify nextTrack ext API lib call`);
-      });
+      }
+    );
   }
 
   // Make a call to the spotify ext API from pauseTrack
   pauseTrack = async () => {
-    // e.preventDefault();
     await spotifyApi.pause()
       .then(async (response) => {
         console.log(response);
@@ -276,14 +281,37 @@ class App extends Component {
         });
       }).catch((err) => {
         console.log(`${err} in the spotify pauseTrack ext API lib call`);
+      }
+    );
+  }
+
+    // Make a call to the spotify ext API from getDeviceIds
+  getDeviceIds = async () => {
+    await spotifyApi.getMyDevices()
+    .then(async (response) => {
+      console.log(response);
+      this.setState({
+        allDeviceIds: response.devices,
       });
+    }).catch((err) => {
+      console.log(`${err} in the spotify getDeviceIds ext API lib call`);
+    });
   }
 
   // Make a call to the spotify ext API from playTrack
-  playTrack = async () => {
-    // e.preventDefault();
-    if (this.state.item.artists[0].name) {
-      await spotifyApi.play()
+  playTrack = async (uri) => {
+
+    if (!this.state.device_id) {
+      await this.getDeviceIds();
+      this.setState({
+        device_id: this.allDeviceIds.devices[1].id
+      });
+    }
+
+    await this.getCurrentlyPlaying();
+
+    if (uri === "" && this.state.nowPlaying.artists[0].name) {
+      await spotifyApi.play({"device_id": this.state.device_id})
         .then(async (response) => {
           console.log(response);
           await this.getCurrentlyPlaying();
@@ -293,27 +321,32 @@ class App extends Component {
         }).catch((err) => {
           console.log(`${err} in the spotify playTrack ext API lib call`);
         });
-    } else {
-      await spotifyApi.getMyDevices()
+    } else if (uri !== "" && this.state.artistResults[0]) {
+      console.log(uri + ': device_id');
+      await spotifyApi.play({"device_id": this.state.device_id, "context_uri": uri})
       .then(async (response) => {
         console.log(response);
+        await this.getCurrentlyPlaying();
+        setTimeout(await this.getCurrentlyPlaying, 200);
         this.setState({
-          device_id: response.devices[1].id
+          is_playing: true,
         });
       }).catch((err) => {
         console.log(`${err} in the spotify playTrack ext API lib call`);
       });
+    } else {
       await spotifyApi.play({"device_id": this.state.device_id, "context_uri": "spotify:album:2aEfwug3iZ4bivziB14C1F"})
         .then(async (response) => {
           console.log(response);
           await this.getCurrentlyPlaying();
-          setTimeout(this.getCurrentlyPlaying, 200);
+          setTimeout(await this.getCurrentlyPlaying, 200);
           this.setState({
             is_playing: true,
           });
         }).catch((err) => {
           console.log(`${err} in the spotify playTrack ext API lib call`);
-        });
+        }
+      );
     }
   }
 
@@ -325,15 +358,94 @@ class App extends Component {
         if (response.item.artists[0].name) {
           this.setState({
             response: response,
-            item: response.item,
-            device_id: response.device_id,
+            nowPlaying: response.item,
+            device_id: response.device.id,
             is_playing: response.is_playing,
             progress_ms: response.progress_ms, 
           });
         }
       }).catch((err) => {
         console.log(`${err} in the spotify getCurrentlyPlaying ext API lib call`);
+      }
+    );
+  }
+
+  toggleJS = () => {
+    this.setState(prevState => ({
+      js: !prevState.js
+    }));
+  }
+
+  createCocktail = async (formData) => {
+    console.log(formData);
+    const newCocktail = await fetch(`${process.env.REACT_APP_BACKEND_ADDRESS}/api/v1/cocktails`, {
+      credentials: 'include',
+      method: "POST",
+      body: JSON.stringify(formData),
+      headers: {
+          "Content-Type": 'application/json'
+      }
+    })
+    const parsedResponse = await newCocktail.json();
+    console.log(parsedResponse);
+    if(parsedResponse.status === 200){
+      console.log(`cocktail with _id:${parsedResponse.data._id} was created`);
+      alert(`cocktail with _id:${parsedResponse.data._id} was created`);
+      this.setState({
+          newCocktail: parsedResponse.data
+      }, ()=>{
+          this.state.history.push("/cocktails")
+      })
+    } else {
+      console.log('The creation was unsuccessful');
+      alert('The creation was unsuccessful');
+    }
+  }
+
+  updateCocktail = async (formData) => {
+    console.log(formData);
+    formData.cId = this.state.cocktail.data.cId;
+    formData._id = this.state.cocktail.data._id;
+    const updatedCocktail = await fetch(`${process.env.REACT_APP_BACKEND_ADDRESS}/api/v1/cocktails`, {
+      credentials: 'include',
+      method: "PUT",
+      body: JSON.stringify(formData),
+      headers: {
+          "Content-Type": 'application/json'
+      }
+    })
+    const parsedResponse = await updatedCocktail.json();
+    console.log(parsedResponse);
+    if(parsedResponse.status === 200){
+      console.log(`cocktail with _id:${parsedResponse.data._id} was updated`);
+      alert(`cocktail with _id:${parsedResponse.data._id} was updated`);
+        this.setState({
+            updateCocktail: parsedResponse.data
+        }, ()=>{
+            this.state.history.push("/cocktails")
+        })
+    } else {
+      console.log('The update was unsuccessful');
+      alert('The update was unsuccessful');
+    }
+  }
+
+  deleteCocktail = async () => {
+    try {
+      const deletedCocktail = await fetch(`${process.env.REACT_APP_BACKEND_ADDRESS}/api/v1/cocktails/${this.state.cocktail.data._id}`, {
+        method: 'DELETE',
+        credentials: 'include'
       });
+      if (deletedCocktail.status === 200) {
+        console.log(`cocktail with _id:${this.state.cocktail.data._id} was deleted`);
+        alert(`cocktail with _id:${this.state.cocktail.data._id} was deleted`);
+      } else {
+        console.log('The delete was unsuccessful');
+        alert('The delete was unsuccessful');
+      }
+    } catch(err) {
+      console.log(err);
+    }
   }
 
   render() {
@@ -344,51 +456,122 @@ class App extends Component {
   // };
   // const view = 'list'; // or 'coverart'
   // const theme = 'black'; // or 'white'
+  
     return (
       <div className="App">
+
+        <Navbar color="light" light expand="md">
+        <NavbarToggler onClick={this.toggle} />
+          <NavbarBrand href="/"><img width="32px" src="/images/favicon-32x32.png" alt=""/> DRNKJMZ</NavbarBrand>
+            <Form id="search-submit" className="form-inline my-2 my-lg-0" action="/search" onSubmit={(e) => {e.preventDefault(); this.handleSubmit(null, this.state.artist); }}>
+              <FormGroup>
+                <Input className="form-control mr-sm-2" type="search" name="artist" id="artistSearch" onChange={this.handleChange} placeholder={this.state.token ? "Search for Artists here" : "Login with Spotify to Search"}/>
+                <Button className="btn-sm btn--loginApp-link" disabled={this.state.token ? false : true } type="submit">SUBMIT</Button>
+              </FormGroup>
+            </Form>
+          <Collapse isOpen={this.state.isOpen} navbar>
+            <Nav className="ml-auto" navbar>
+              <NavItem>
+                <NavLink className="btn-sm btn--loginApp-link"
+                  href={`${sPAuthEndpoint}?client_id=${sPClientId}&redirect_uri=${sPRedirectUri}&scope=${sPScopes.join("%20")}&response_type=token&show_dialog=true`}
+                >Login With Spotify</NavLink>
+              </NavItem>
+            </Nav>
+          </Collapse>
+        </Navbar>
+
         <header className="App-header">
-        <h4>Welcome to DRNKJMZ, an app that links to your Spotify account to recommend the perfect cocktail for your listening experience!</h4>
-          <img src={logo} className="App-logo" alt="logo" />
-          {!this.state.token && (
-            <a className="btn btn--loginApp-link"
-              href={`${sPAuthEndpoint}?client_id=${sPClientId}&redirect_uri=${sPRedirectUri}&scope=${sPScopes.join("%20")}&response_type=token&show_dialog=true`}
-            >Login to Spotify</a>
+          {!this.state.token ? (
+            <div>
+              <h3>Welcome to DRNKJMZ</h3>
+              <p className="normal-text">An app that links to your Spotify account to recommend the perfect cocktail for your listening experience!</p>
+              <img src={logo} alt="logo"/><br/>
+              <a className="btn btn--loginApp-link"
+                href={`${sPAuthEndpoint}?client_id=${sPClientId}&redirect_uri=${sPRedirectUri}&scope=${sPScopes.join("%20")}&response_type=token&show_dialog=true`}
+              >Login With Spotify</a>
+            </div>
+          ) : (
+            <div>
+              <h3>Successfully linked to Spotify!</h3>
+              <p className="normal-text">Either use the buttons below to control playback or search for a new Artist above.</p>
+            </div>
           )}
 
-          {this.state.token && this.state.item.artists[0].name && (
+          {this.state.token && this.state.nowPlaying.artists[0].name && (
             <div className="player-info">
-              <Player
-                item={this.state.item}
+              <PlayerComp
+                nowPlaying={this.state.nowPlaying}
                 is_playing={this.state.is_playing}
                 progress_ms={this.progress_ms}
                 pauseTrack={this.pauseTrack}
                 playTrack={this.playTrack}
+                // currDeviceName={this.currDevice.name}
               />
               {/* <Script
                 url="https://sdk.scdn.co/spotify-player.js" 
                 onError={this.handleScriptError} 
                 onLoad={this.onSpotifyWebPlaybackSDKReady}
               />
-              {/* <iframe className="embedded-player" title="embedded-player" src={`https://embed.spotify.com/?uri=${this.state.item.album.uri}`} width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"/> */}
+              {/* <iframe className="embedded-player" title="embedded-player" src={`https://embed.spotify.com/?uri=${this.state.nowPlaying.album.uri}`} width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"/> */}
             </div>
           )}
 
-          {this.state.token ? (
-              <div className="now-playing__controls"><br/>
-              <button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.previousTrack(); }}>&lt;&lt;</button>
-              <button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.pauseTrack(); }}>PAUSE ||</button>
-              <button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.playTrack(); }}>PLAY |&gt;</button>
-              <button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.nextTrack(); }}>&gt;&gt;</button>
+          {this.state.token && (
+            <div><br/>
+              <Button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.previousTrack(); }}>&lt;&lt;</Button>
+              <Button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.pauseTrack(); }}>Pause</Button>
+              <Button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.playTrack(""); }}> Play </Button>
+              <Button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.nextTrack(); }}>&gt;&gt;</Button>
+              <br/><br/><br/>
+            </div>
+          )}
 
-            </div>)
-          : (
-          <div>
-            <br/><br/>
-            ***Please login to your spotify account by clicking above***
-          </div>)}
+          {this.state.token && this.state.cocktail && (
+            <div>
+              <p className="normal-text">A perfect cocktail pairing for {!isNullOrUndefined(this.state.artistResults[0]) ? this.state.artistResults[0].name : 'the Artist'} has been recommended below...</p>
+              <CocktailComp
+                nowPlaying={this.state.nowPlaying}
+                cocktailDirections={this.state.cocktail.data.directions}
+                cocktailImg={this.state.cocktail.data.img}
+              />
+              <br/><br/>
+              <Button id="new-cocktail" className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.handleSubmit(e, this.state.nowPlaying.artists[0].name)}}>Get New Cocktail</Button>
+              <br/><br/>
+            </div>
+          )}
+          
+          {!this.state.token && (
+            <div>
+              <br/>
+              <p className="normal-text">Please login to your Spotify account by clicking above</p>
+            </div>
+          )}
+
+          {this.state.token && this.state.js && (
+            <div>
+              <p className="normal-text">Welcome Jake to Admin Mode</p>
+              <EditCocktail
+               nowPlaying={this.state.nowPlaying}
+               cocktailToEdit={this.state.cocktail}
+               cocktailName={this.state.cocktail.data.name}
+               cocktailDirections={this.state.cocktail.data.directions}
+               cocktailImg={this.state.cocktail.data.img}
+               cocktailGenres={this.state.cocktail.data.genres}
+               updateCocktail={this.updateCocktail}
+              />
+              <Button id="delete-cocktail" className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.deleteCocktail();}}>DELETE</Button><br/><br/>
+              <NewCocktail
+              nowPlaying={this.state.nowPlaying}
+              cocktailName={this.state.newCocktailName}
+              cocktailDirections={this.state.newCocktailDirections}
+              cocktailImg={this.state.newCocktailImg}
+              cocktailGenres={this.state.newCocktailGenres}
+              createCocktail={this.createCocktail}
+              />
+            </div>
+          )}
+        <button id="js" onClick={(e) => {e.preventDefault(); this.toggleJS();}}/>
         </header>
-        <div>
-        </div>
       </div>
     );
   }

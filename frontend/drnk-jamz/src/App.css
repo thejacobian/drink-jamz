@@ -3,7 +3,6 @@
 }
 
 .App-logo {
-  /* animation: App-logo-spin infinite 20s linear; */
   /* height: 40vmin; */
   pointer-events: none;
   /* border: 0.2em solid rgb(0,196,85);
@@ -23,17 +22,8 @@
 }
 
 .App-link {
-  color: green;
+color: green !important;
 }
-
-/* @keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-} */
 
 * {
   box-sizing: border-box;
@@ -56,31 +46,56 @@ body {
   display: none;
 }
 
+
 /** Buttons **/
 
 .btn {
-  background-color: transparent;
-  border-radius: 2em;
-  border: 0.2em solid rgb(0,196,85);
-  color: rgb(0,196,85);
-  cursor: pointer;
-  font-size: 3vmin;
-  padding: 0.7em 1.5em;
-  text-transform: uppercase;
-  transition: all 0.25s ease;
-  text-decoration: none;
+  background-color: transparent !important;
+  border-radius: 2em !important;
+  border: 0.2em solid rgb(0,196,85) !important;
+  color: rgb(0,196,85) !important;
+  cursor: pointer !important;
+  font-size: 3vmin !important;
+  padding: 0.7em 1.5em !important;
+  text-transform: uppercase !important;
+  transition: all 0.25s ease !important;
+  text-decoration: none !important;
+  font-weight: 700 !important;
+}
+
+.btn-sm {
+  background-color: transparent !important;
+  border-radius: 2em !important;
+  border: 0.2em solid rgb(0,196,85) !important;
+  color: rgb(0,196,85) !important;
+  /* cursor: pointer !important; */
+  font-size: 2vmin !important;
+  padding: 0.7em 1.5em !important;
+  text-transform: uppercase !important;
+  transition: all 0.25s ease !important;
+  text-decoration: none !important;
+  font-weight: 700 !important;
 }
 
 .btn:hover {
-  background: rgb(0,196,85);
-  color: #333;
+  background: rgb(0,196,85) !important;
+  color: rgba(0,0,0,0.8) !important;
+  font-weight: 700 !important;
+}
+
+.btn-sm:hover {
+  background: rgb(0,196,85) !important;
+  color: rgba(0,0,0,0.8) !important;
+  font-weight: 700 !important;
 }
 
 .btn--login {
-  margin: 2em 2em;
+  margin: 2em 2em !important;
 }
 
+
 /** Background **/
+
 .background {
   left: 0;
   right: 0;
@@ -101,6 +116,7 @@ body {
   position: relative;
   width: 80%;
   z-index: 1;
+  font-size: 0.7em;
 }
 
 .container {
@@ -116,16 +132,22 @@ body {
 
 /** Player CSS **/
 /** Now Playing **/
+.now-playing {
+  max-width: 500px;
+}
+
 .now-playing__name {
   font-size: 1.5em;
   margin-bottom: 0.2em;
 }
 
 .now-playing__artist {
+  font-size: 1.2em;
   margin-bottom: 1em;
 }
 
 .now-playing__status {
+  font-size: 1.2em;
   margin-bottom: 1em;
 }
 
@@ -137,6 +159,7 @@ body {
 }
 
 .now-playing__img img {
+  min-width: 20vmin;
   max-width: 80vmin;
   width: 100%;
 }
@@ -146,7 +169,8 @@ body {
   width: 45%;
 }
 
-/** Progress **/
+
+/** Progress Bar **/
 
 .progress {
   border: 1px solid #eee;
@@ -160,8 +184,71 @@ body {
   height: 4px;
 }
 
-/* .now-playing__bio {
-  display: "block";
-  width: 50%;
-  height: 50%;
-} */
+
+/** Navbar Styling **/
+
+#artistSearch {
+  min-width: 35vh !important;
+  display: inline !important;
+}
+
+.search-form {
+  display: inline !important;
+}
+
+.search-form-group {
+  display: inline !important;
+}
+
+
+/** Text box styling **/
+
+.normal-text {
+  max-width: 575px;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+h3 {
+  margin: 7vh !important;
+}
+
+
+/** Cocktail styling **/
+
+.cocktail__img {
+  float: right;
+  margin-left: 10px;
+  text-align: left;
+  width: 45%;
+}
+
+.cocktail__img img {
+  min-width: 20vmin;
+  max-width: 80vmin;
+  width: 100%;
+}
+
+.cocktail__directions {
+  white-space: pre-wrap !important;
+  margin-bottom: 0.2em;
+}
+
+.cocktail__side {
+  margin-left: 5%;
+  width: 45%;
+}
+
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+
+/** Cocktail Admin Panel **/
+
+#js {
+  margin-right:0;
+  justify-content: right;
+}

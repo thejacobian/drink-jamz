@@ -5,8 +5,8 @@
 const express = require('express');
 
 const app = express();
-// const bodyParser = require('body-parser');
-// const cors = require('cors');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 // const session = require('express-session');
 const morgan = require('morgan');
 // const MongoDBStore = require('connect-mongodb-session')(session);
@@ -17,18 +17,35 @@ const Cocktail = require('./models/cocktail');
 // populate cocktails from DB import file
 const cocktailsData = require('./populateCocktails');
 
-// require dotenv for enviroment variables
+// require dotenv for environment variables
 require('dotenv').config();
+
+// set up cors
+app.use(cors({
+  origin: process.env.REACT_APP_FRONTEND_ADDRESS,
+  credentials: true,
+  optionsSuccessStatus: 200,
+}));
 
 // require mongo db connection
 require('./db/db');
 
+// // Utility function from Stack Overflow to see if an object is empty
+// const isEmpty = (obj) => {
+//   for (const key in obj) {
+//     if (obj.hasOwnProperty(key)) { return false; }
+//   }
+//   return true;
+// };
+
+// // Add the cocktails test data if the collection is empty
 // cocktailsData.forEach((cocktail) => {
 //   Cocktail.create({
 //     name: cocktail.name,
 //     directions: cocktail.directions,
-//     genre: cocktail.genre,
 //     cId: cocktail.cId,
+//     genres: [cocktail.genre],
+//     img: '',
 //   }, (err, createdCocktail) => {
 //     if (err) {
 //       console.log(err);
@@ -40,21 +57,14 @@ require('./db/db');
 
 // // define mongo db store
 // const store = new MongoDBStore({
-//   uri: process.env.REACT_APP_LOCAL_MONGODB_URI,
+//   uri: process.env.REACT_APP_MONGODB_URI,
 //   collection: 'mySessions'
 // });
 
 // // set up middleware
 app.use(morgan('short'));
 // app.use(bodyParser.urlencoded({extended: false}));
-// app.use(bodyParser.json());
-
-// // set up cors
-// app.use(cors({
-//   origin: process.env.REACT_APP_LOCAL_FRONTEND_ADDRESS,
-//   credentials: true,
-//   optionsSuccessStatus: 200
-// }))
+app.use(bodyParser.json());
 
 // // set up express-session
 // app.use(session({
@@ -78,39 +88,21 @@ app.use(morgan('short'));
 const cocktailController = require('./controllers/cocktailController');
 // const authController  = require('./controllers/authController');
 
-// Utility function from Stack Overflow to see if an object is empty
-const isEmpty = (obj) => {
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) { return false; }
-  }
-  return true;
-};
+// // visit home/index route when db is empty to populate cocktail db
+// app.get('/', async (req, res) => {
+//   try {
+//     // Add the cocktails test data if the collection is empty
+//     const anyCocktails = Cocktail.find({});
 
-// Insert cocktail objects into DB using Mongoose ONLY if DB is empty
-const populateCocktailsFunc = () => {
-  cocktailsData.forEach((cocktail) => {
-    Cocktail.create({
-      name: cocktail.name,
-      directions: cocktail.directions,
-      genre: cocktail.genre,
-      cId: cocktail.cId,
-    }, (err, createdCocktail) => {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log(createdCocktail);
-      }
-    });
-  });
-};
+//     if (isEmpty(anyCocktails)) {
+//       populateCocktailsFunc();
+//     }
+//   } catch (err) {
+//     res.send(err);
+//   }
+// });
 
-const anyCocktails = Cocktail.find({});
-
-if (isEmpty(anyCocktails)) {
-  populateCocktailsFunc();
-}
-
-// // use the controllers
+// use the controllers
 app.use('/api/v1/cocktails', cocktailController);
 // app.use('/auth', authController);
 
