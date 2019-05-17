@@ -18,7 +18,7 @@ import EditCocktail from "./EditCocktail/EditCocktail";
 import NewCocktail from "./NewCocktail/NewCocktail";
 import logo from "./mstile-150x150.png";
 import "./App.css";
-import { isNull, isNullOrUndefined } from "util";
+import { isNullOrUndefined } from "util";
 // import SpotifyPlayer from "react-spotify-player";
 // import Script from "react-load-script"
 import SpotifyWebApi from "spotify-web-api-js";
@@ -98,6 +98,7 @@ class App extends Component {
       progress_ms: 0,
       js: false,
       history: [],
+      externalWindow: null,
     };
     this.getCurrentlyPlaying = this.getCurrentlyPlaying.bind(this);
     this.previousTrack = this.previousTrack.bind(this);
@@ -105,6 +106,7 @@ class App extends Component {
     this.playTrack = this.playTrack.bind(this);
     this.pauseTrack = this.pauseTrack.bind(this);
     this.toggleJS = this.toggleJS.bind(this);
+    this.openSpotifyWebPlayer = this.openSpotifyWebPlayer.bind(this);
   }
   
   // Once react page is loaded/mounted after redirect from spotify login,
@@ -129,25 +131,34 @@ class App extends Component {
       // get the user deviceIds
       await this.getDeviceIds();
 
-      // console.log(await this.state.allDeviceIds.filter((device) => device.id === this.state.device_id));
-      // this.setState ({
-      //   device: await this.state.allDeviceIds.filter((device) => device.id === this.state.device_id)
-      // });
+      if (this.state.allDeviceIds && !this.state.device_id) {
+        this.setState({
+          device_id: this.state.allDeviceIds[0].id,
+          device: this.state.allDeviceIds[0]
+        });
+      }
 
-      // this.state.allDeviceIds.foreach((device) => {
-      //   if (device.id === this.state.device_id) {
-      //     this.setState ({
-      //       device: device,
-      //     });
-      //   }
-      // });
+      if (!this.state.device && this.state.allDeviceIds) {
+        this.setState ({
+          device: await this.state.allDeviceIds.filter((aDevice) => aDevice.id === this.state.device_id)
+        });
+        // this.state.allDeviceIds.foreach((aDevice) => {
+        //   if (aDevice.id === this.state.device_id) {
+        //     this.setState ({
+        //       device: aDevice
+        //     });
+        //   }
+        // });
+      }
 
-      // get initial cocktail for currentlyPlaying artist on page load.
-      await this.handleSubmit(null, this.state.nowPlaying.artists[0].name);
+      if (this.state.device_id && this.state.allDeviceIds && this.state.nowPlaying.artists) {
+        // get initial cocktail for currentlyPlaying artist on page load.
+        await this.handleSubmit(null, this.state.nowPlaying.artists[0].name);
 
-      this.setState({
-        is_playing: "Playing"
-      })
+        this.setState({
+          is_playing: "Playing"
+        })
+      }
     }
   }
 
@@ -162,7 +173,6 @@ class App extends Component {
       const searchURL = `https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i=${cId}`;
       const result = await fetch(searchURL);
       const parsedResult = await result.json();
-      console.log(parsedResult);
       return parsedResult.drinks[0].strDrinkThumb;
     } catch(err) {
       console.log(`${err} in the cocktailDB ext API call`);
@@ -182,9 +192,17 @@ class App extends Component {
 
     await this.getCurrentlyPlaying();
 
-    const response = await fetch(`http://localhost:27018/api/v1/cocktails/search`, {
+    // hack in case artistResults has not been found yet from Spotify API
+    let cocktailGenres;
+    if (this.state.artistResults)
+      cocktailGenres = this.state.artistResults[0];
+    else {
+      cocktailGenres = "rock";
+    }
+
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_ADDRESS}/api/v1/cocktails/search`, {
       method: "POST",
-      body: JSON.stringify(this.state.artistResults[0]),
+      body: JSON.stringify(cocktailGenres),
       credentials: 'include',
       headers: {
           "Content-Type": "application/json"
@@ -303,8 +321,11 @@ class App extends Component {
 
     if (!this.state.device_id) {
       await this.getDeviceIds();
+    }
+
+    if (!this.state.devuce_id && this.allDeviceIds) {
       this.setState({
-        device_id: this.allDeviceIds.devices[1].id
+        device_id: this.allDeviceIds[0].id
       });
     }
 
@@ -448,6 +469,10 @@ class App extends Component {
     }
   }
 
+  openSpotifyWebPlayer = () => {
+    window.open("https://open.spotify.com/", "_blank")
+  }
+
   render() {
   // // size may also be a plain string using the presets 'large' or 'compact'
   // const size = {
@@ -456,7 +481,7 @@ class App extends Component {
   // };
   // const view = 'list'; // or 'coverart'
   // const theme = 'black'; // or 'white'
-  
+
     return (
       <div className="App">
 
@@ -488,7 +513,7 @@ class App extends Component {
               <img src={logo} alt="logo"/><br/>
               <a className="btn btn--loginApp-link"
                 href={`${sPAuthEndpoint}?client_id=${sPClientId}&redirect_uri=${sPRedirectUri}&scope=${sPScopes.join("%20")}&response_type=token&show_dialog=true`}
-              >Login With Spotify</a>
+              >Login With Spotify</a><br/><br/>
             </div>
           ) : (
             <div>
@@ -505,7 +530,7 @@ class App extends Component {
                 progress_ms={this.progress_ms}
                 pauseTrack={this.pauseTrack}
                 playTrack={this.playTrack}
-                // currDeviceName={this.currDevice.name}
+                // currDeviceName={this.state.device.name}
               />
               {/* <Script
                 url="https://sdk.scdn.co/spotify-player.js" 
@@ -543,7 +568,7 @@ class App extends Component {
           {!this.state.token && (
             <div>
               <br/>
-              <p className="normal-text">Please login to your Spotify account by clicking above</p>
+              <p className="normal-text">NOTE: If you do not already have Spotify streaming, open the web player at <a id="spotify-link" href="https://open.spotify.com/" target="_blank">https://open.spotify.com/</a> first and then click the button above.</p>
             </div>
           )}
 

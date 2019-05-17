@@ -10,6 +10,9 @@ const router = express.Router();
 // const User = require('../models/users');
 const Cocktail = require('../models/cocktail');
 
+// populate cocktails from DB import file
+const cocktailsData = require('../populateCocktails');
+
 // // add require login middleware
 // const requireLogin = require('../middleware/requireLogin');
 
@@ -21,10 +24,32 @@ const isEmpty = (obj) => {
   return true;
 };
 
+const populateCocktailsFunc = (() => {
+  // Add the cocktails test data if the collection is empty
+  cocktailsData.forEach((cocktail) => {
+    Cocktail.create({
+      name: cocktail.name,
+      directions: cocktail.directions,
+      cId: cocktail.cId,
+      genres: [cocktail.genre],
+      img: '',
+    }, (err, createdCocktail) => {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log(createdCocktail);
+      }
+    });
+  });
+});
+
 // INDEX ROUTE for debugging/admin purposes
 router.get('/', async (req, res) => {
   try {
-    const cocktails = await Cocktail.find().sort();
+    const cocktails = await Cocktail.find({}).sort();
+    if (isEmpty(cocktails)) {
+      populateCocktailsFunc();
+    }
     res.json({
       data: cocktails,
       status: 200,
