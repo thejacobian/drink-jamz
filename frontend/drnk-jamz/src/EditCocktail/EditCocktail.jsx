@@ -32,8 +32,8 @@ class EditCocktail extends Component{
             Name: <input type="text" name="name" defaultValue={this.props.cocktailName} onChange={this.handleChange}/><br/>
             Directions: <textarea type="text" name="directions" defaultValue={this.props.cocktailDirections} onChange={this.handleChange}/><br/>
             Image Url: <input type="text" name="img" defaultValue={this.props.cocktailImg} onChange={this.handleChange}/><br/>
-            Genres: <input type="text" name="genres" defaultValue={this.props.cocktailGenres[0]} onChange={this.handleChange}/><br/><br/>
-            <button className="btn btn--loginApp-link" type="submit">SUBMIT</button>
+            Genres: <input type="text" name="genres" defaultValue={this.props.cocktailGenres[0]} onChange={this.handleChange}/><br/>
+            <button className="btn btn-non-controls" type="submit">SUBMIT</button>
             <div className="background" style={backgroundStyles} />{" "}
           </form>
   }

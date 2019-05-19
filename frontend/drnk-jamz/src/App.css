@@ -10,7 +10,7 @@
 }
 
 .App-header {
-  background-color: rgba(0,0,0);
+  background-color: rgba(0,0,0,1);
   /* background-color: #282c34; */
   min-height: 100vh;
   display: flex;
@@ -22,7 +22,7 @@
 }
 
 .App-link {
-color: green !important;
+/* color: green !important; */
 }
 
 * {
@@ -46,7 +46,6 @@ body {
   display: none;
 }
 
-
 /** Buttons **/
 
 .btn {
@@ -61,20 +60,27 @@ body {
   transition: all 0.25s ease !important;
   text-decoration: none !important;
   font-weight: 700 !important;
+  min-height: 50px !important;
 }
 
-.btn-sm {
+.btn-non-controls {
   background-color: transparent !important;
   border-radius: 2em !important;
   border: 0.2em solid rgb(0,196,85) !important;
   color: rgb(0,196,85) !important;
-  /* cursor: pointer !important; */
-  font-size: 2vmin !important;
-  padding: 0.7em 1.5em !important;
+  cursor: pointer !important;
+  font-size: 3vmin !important;
   text-transform: uppercase !important;
   transition: all 0.25s ease !important;
   text-decoration: none !important;
   font-weight: 700 !important;
+  min-height: 50px !important;
+  margin: 1em 1em !important;
+}
+
+.btn-sm {
+  font-size: 2vmin !important;
+  margin: 0 !important;
 }
 
 .btn:hover {
@@ -83,17 +89,9 @@ body {
   font-weight: 700 !important;
 }
 
-.btn-sm:hover {
-  background: rgb(0,196,85) !important;
-  color: rgba(0,0,0,0.8) !important;
-  font-weight: 700 !important;
+#nav-login-btn {
+  width: 218px !important;
 }
-
-.btn--login {
-  margin: 2em 2em !important;
-}
-
-
 /** Background **/
 
 .background {
@@ -172,7 +170,7 @@ body {
 
 /** Progress Bar **/
 
-.progress {
+/* .progress {
   border: 1px solid #eee;
   height: 6px;
   border-radius: 3px;
@@ -182,24 +180,19 @@ body {
 .progress__bar {
   background-color: #eee;
   height: 4px;
-}
+} */
 
 
 /** Navbar Styling **/
 
 #artistSearch {
-  min-width: 35vh !important;
+  min-width: 32vh !important;
   display: inline !important;
 }
 
 .search-form {
   display: inline !important;
 }
-
-.search-form-group {
-  display: inline !important;
-}
-
 
 /** Text box styling **/
 
@@ -249,17 +242,40 @@ h3 {
 /** Cocktail Admin Panel **/
 
 #js {
-  margin-right:0;
-  justify-content: right;
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 5px;
+  background-color: rgba(248,249,250,1);
+  border: none;
 }
 
 #spotify-link {
   background:none!important;
   color:rgb(0,196,85) !important;
-  border:none; 
-  padding:0!important;
-  font: inherit;
-  /*border is optional*/
-  border-bottom:1px solid #444; 
-  cursor: pointer;
+}
+
+/** Media Queries **/
+
+@media (max-width: 767px) {
+  .btn-non-controls {
+    font-size: calc(15px + 1vw) !important;
+  }
+
+  #submit-btn {
+    width: 215px !important;
+    height: 50px !important;
+    font-size: 15px !important;
+    text-align: center;
+    justify-self: auto;
+  
+  }
+  #search-form-group {
+    margin-bottom: 0 !important;
+  }
+
+  #nav-login-btn {
+    display: none !important;
+  }
 }

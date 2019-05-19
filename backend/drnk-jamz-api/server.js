@@ -1,3 +1,5 @@
+/* eslint-disable no-path-concat */
+/* eslint-disable prefer-template */
 /* eslint-disable no-prototype-builtins */
 /* eslint-disable no-restricted-syntax */
 // require express packages
@@ -16,20 +18,20 @@ require('dotenv').config();
 
 // set up cors
 app.use(cors({
-  origin: process.env.REACT_APP_FRONTEND_ADDRESS,
+  origin: process.env.FRONTEND_ADDRESS,
   credentials: true,
   optionsSuccessStatus: 200,
 }));
 
 // Use 'path' for Big Repo deployment
-app.use(express.static(path.join(__dirname, 'frontend/build')));
+app.use(express.static(path.join(__dirname, 'client/build')));
 
 // require mongo db connection
 require('./db/db');
 
 // // define mongo db store
 // const store = new MongoDBStore({
-//   uri: process.env.REACT_APP_MONGODB_URI,
+//   uri: process.env.MONGODB_URI,
 //   collection: 'mySessions'
 // });
 
@@ -41,7 +43,7 @@ app.use(bodyParser.json());
 // // set up express-session
 // app.use(session({
 //   saveUninitialized: true,
-//   secret: process.env.REACT_APP_SECRET,
+//   secret: process.env.SECRET,
 //   resave: false,
 //   store: store,
 //   cookie: {
@@ -64,6 +66,11 @@ const cocktailController = require('./controllers/cocktailController');
 app.use('/api/v1/cocktails', cocktailController);
 // app.use('/auth', authController);
 
-app.listen(process.env.REACT_APP_MONGODB_PORT, () => {
-  console.log(`Listening on port: ${process.env.REACT_APP_MONGODB_PORT}`);
+// Handles any requests that don't match the ones above
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname + '/client/build/index.html'));
+});
+
+app.listen(process.env.PORT || 27018, () => {
+  console.log(`Listening on port: ${process.env.PORT}`);
 });

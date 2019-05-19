@@ -17,8 +17,8 @@ const CocktailComp = (props) => {
         <div className="cocktail__img">
           <img src={props.cocktailImg} alt="cocktailImg" />
         </div>
-          {/* <button className="btn btn--loginApp-link" onClick={props.pauseTrack.bind(null)}>PAUSE</button><br/><br/><br/>
-          <button className="btn btn--loginApp-link" onClick={props.playTrack.bind(null)}>PLAY</button><br/><br/><br/> */}
+          {/* <button className="btn" onClick={props.pauseTrack.bind(null)}>PAUSE</button><br/><br/><br/>
+          <button className="btn" onClick={props.playTrack.bind(null)}>PLAY</button><br/><br/><br/> */}
         <div className="background" style={backgroundStyles} />{" "}
       </div>
     </div>

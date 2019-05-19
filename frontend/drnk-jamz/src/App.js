@@ -11,6 +11,7 @@ import {
   Nav,
   NavItem,
   NavLink,
+  RouteNavItem,
  } from "reactstrap";
 import PlayerComp from "./PlayerComp/PlayerComp";
 import CocktailComp from "./CocktailComp/CocktailComp";
@@ -31,7 +32,7 @@ const spotifyApi = new SpotifyWebApi();
 // spotify api connection variables (some from private .env)
 const sPAuthEndpoint = 'https://accounts.spotify.com/authorize';
 const sPClientId = process.env.REACT_APP_SPOTIFY_CLIENT_ID;
-const sPRedirectUri = process.env.REACT_APP_SPOTIFY_REDIRECT_URI;
+const sPRedirectUri= process.env.REACT_APP_SPOTIFY_REDIRECT_URI;
 const sPScopes = [
   // 'streaming',
   // 'user-read-private',
@@ -99,14 +100,15 @@ class App extends Component {
       js: false,
       history: [],
       externalWindow: null,
+      isOpen: false,
     };
     this.getCurrentlyPlaying = this.getCurrentlyPlaying.bind(this);
     this.previousTrack = this.previousTrack.bind(this);
     this.nextTrack = this.nextTrack.bind(this);
     this.playTrack = this.playTrack.bind(this);
     this.pauseTrack = this.pauseTrack.bind(this);
+    this.toggleNav = this.toggleNav.bind(this);
     this.toggleJS = this.toggleJS.bind(this);
-    this.openSpotifyWebPlayer = this.openSpotifyWebPlayer.bind(this);
   }
   
   // Once react page is loaded/mounted after redirect from spotify login,
@@ -210,7 +212,6 @@ class App extends Component {
     });
 
     const parsedResponse = await response.json();
-    console.log(parsedResponse);
 
     if(parsedResponse.status === 200){
 
@@ -230,7 +231,6 @@ class App extends Component {
   searchArtists = async (searchTerm) => {
     await spotifyApi.searchArtists(searchTerm)
       .then(async (response) => {
-        console.log(response);
         this.setState({
           artistResults: response.artists.items,
           response: response
@@ -245,7 +245,6 @@ class App extends Component {
   getArtistDetails = async (artistId) => {
     await spotifyApi.getArtist(artistId)
       .then(async (response) => {
-        console.log(response);
       }).catch((err) => {
         console.log(`${err} in the spotify getArtistDetails ext API lib call`);
       }
@@ -256,7 +255,6 @@ class App extends Component {
   getTrackFeatures = async () => {
     await spotifyApi.getAudioFeaturesForTrack(this.state.nowPlaying.id)
       .then(async (response) => {
-        console.log(response);
         setTimeout(await this.getCurrentlyPlaying, 200);
       }).catch((err) => {
         console.log(`${err} in the spotify getTrackFeatures ext API lib call`);
@@ -268,7 +266,6 @@ class App extends Component {
   previousTrack = async () => {
     await spotifyApi.skipToPrevious()
       .then(async (response) => {
-        console.log(response);
         setTimeout(await this.getCurrentlyPlaying, 200);
       }).catch((err) => {
         console.log(`${err} in the spotify previousTrack ext API lib call`);
@@ -280,7 +277,6 @@ class App extends Component {
    nextTrack = async () => {
     await spotifyApi.skipToNext()
       .then(async (response) => {
-        console.log(response);
         setTimeout(await this.getCurrentlyPlaying, 200);
       }).catch((err) => {
         console.log(`${err} in the spotify nextTrack ext API lib call`);
@@ -292,7 +288,6 @@ class App extends Component {
   pauseTrack = async () => {
     await spotifyApi.pause()
       .then(async (response) => {
-        console.log(response);
         await this.getCurrentlyPlaying();
         this.setState({
           is_playing: false,
@@ -307,7 +302,6 @@ class App extends Component {
   getDeviceIds = async () => {
     await spotifyApi.getMyDevices()
     .then(async (response) => {
-      console.log(response);
       this.setState({
         allDeviceIds: response.devices,
       });
@@ -334,7 +328,6 @@ class App extends Component {
     if (uri === "" && this.state.nowPlaying.artists[0].name) {
       await spotifyApi.play({"device_id": this.state.device_id})
         .then(async (response) => {
-          console.log(response);
           await this.getCurrentlyPlaying();
           this.setState({
             is_playing: true,
@@ -343,10 +336,8 @@ class App extends Component {
           console.log(`${err} in the spotify playTrack ext API lib call`);
         });
     } else if (uri !== "" && this.state.artistResults[0]) {
-      console.log(uri + ': device_id');
       await spotifyApi.play({"device_id": this.state.device_id, "context_uri": uri})
       .then(async (response) => {
-        console.log(response);
         await this.getCurrentlyPlaying();
         setTimeout(await this.getCurrentlyPlaying, 200);
         this.setState({
@@ -358,7 +349,6 @@ class App extends Component {
     } else {
       await spotifyApi.play({"device_id": this.state.device_id, "context_uri": "spotify:album:2aEfwug3iZ4bivziB14C1F"})
         .then(async (response) => {
-          console.log(response);
           await this.getCurrentlyPlaying();
           setTimeout(await this.getCurrentlyPlaying, 200);
           this.setState({
@@ -375,7 +365,6 @@ class App extends Component {
   getCurrentlyPlaying = async () => {
     await spotifyApi.getMyCurrentPlaybackState()
       .then( async (response) => {
-        console.log(response);
         if (response.item.artists[0].name) {
           this.setState({
             response: response,
@@ -398,7 +387,6 @@ class App extends Component {
   }
 
   createCocktail = async (formData) => {
-    console.log(formData);
     const newCocktail = await fetch(`${process.env.REACT_APP_BACKEND_ADDRESS}/api/v1/cocktails`, {
       credentials: 'include',
       method: "POST",
@@ -408,7 +396,6 @@ class App extends Component {
       }
     })
     const parsedResponse = await newCocktail.json();
-    console.log(parsedResponse);
     if(parsedResponse.status === 200){
       console.log(`cocktail with _id:${parsedResponse.data._id} was created`);
       alert(`cocktail with _id:${parsedResponse.data._id} was created`);
@@ -424,7 +411,6 @@ class App extends Component {
   }
 
   updateCocktail = async (formData) => {
-    console.log(formData);
     formData.cId = this.state.cocktail.data.cId;
     formData._id = this.state.cocktail.data._id;
     const updatedCocktail = await fetch(`${process.env.REACT_APP_BACKEND_ADDRESS}/api/v1/cocktails`, {
@@ -436,7 +422,6 @@ class App extends Component {
       }
     })
     const parsedResponse = await updatedCocktail.json();
-    console.log(parsedResponse);
     if(parsedResponse.status === 200){
       console.log(`cocktail with _id:${parsedResponse.data._id} was updated`);
       alert(`cocktail with _id:${parsedResponse.data._id} was updated`);
@@ -469,8 +454,10 @@ class App extends Component {
     }
   }
 
-  openSpotifyWebPlayer = () => {
-    window.open("https://open.spotify.com/", "_blank")
+  toggleNav() {
+    this.setState({
+      isOpen: !this.state.isOpen
+    });
   }
 
   render() {
@@ -486,18 +473,18 @@ class App extends Component {
       <div className="App">
 
         <Navbar color="light" light expand="md">
-        <NavbarToggler onClick={this.toggle} />
+        <NavbarToggler onClick={this.toggleNav} />
           <NavbarBrand href="/"><img width="32px" src="/images/favicon-32x32.png" alt=""/> DRNKJMZ</NavbarBrand>
             <Form id="search-submit" className="form-inline my-2 my-lg-0" action="/search" onSubmit={(e) => {e.preventDefault(); this.handleSubmit(null, this.state.artist); }}>
-              <FormGroup>
+              <FormGroup id="search-form-group">
                 <Input className="form-control mr-sm-2" type="search" name="artist" id="artistSearch" onChange={this.handleChange} placeholder={this.state.token ? "Search for Artists here" : "Login with Spotify to Search"}/>
-                <Button className="btn-sm btn--loginApp-link" disabled={this.state.token ? false : true } type="submit">SUBMIT</Button>
+                <Button id="submit-btn" className="btn-non-controls btn-sm" disabled={this.state.token ? false : true} type="submit">SUBMIT</Button>
               </FormGroup>
             </Form>
           <Collapse isOpen={this.state.isOpen} navbar>
             <Nav className="ml-auto" navbar>
               <NavItem>
-                <NavLink className="btn-sm btn--loginApp-link"
+                <NavLink id="nav-login-btn" className="btn-non-controls btn-sm"
                   href={`${sPAuthEndpoint}?client_id=${sPClientId}&redirect_uri=${sPRedirectUri}&scope=${sPScopes.join("%20")}&response_type=token&show_dialog=true`}
                 >Login With Spotify</NavLink>
               </NavItem>
@@ -511,7 +498,7 @@ class App extends Component {
               <h3>Welcome to DRNKJMZ</h3>
               <p className="normal-text">An app that links to your Spotify account to recommend the perfect cocktail for your listening experience!</p>
               <img src={logo} alt="logo"/><br/>
-              <a className="btn btn--loginApp-link"
+              <a id="login-btn" className="btn btn-non-controls"
                 href={`${sPAuthEndpoint}?client_id=${sPClientId}&redirect_uri=${sPRedirectUri}&scope=${sPScopes.join("%20")}&response_type=token&show_dialog=true`}
               >Login With Spotify</a><br/><br/>
             </div>
@@ -543,11 +530,11 @@ class App extends Component {
 
           {this.state.token && (
             <div><br/>
-              <Button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.previousTrack(); }}>&lt;&lt;</Button>
-              <Button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.pauseTrack(); }}>Pause</Button>
-              <Button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.playTrack(""); }}> Play </Button>
-              <Button className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.nextTrack(); }}>&gt;&gt;</Button>
-              <br/><br/><br/>
+              <Button className="btn" onClick={(e) => {e.preventDefault(); this.previousTrack(); }}>&lt;&lt;</Button>
+              <Button className="btn" onClick={(e) => {e.preventDefault(); this.pauseTrack(); }}>Pause</Button>
+              <Button className="btn" onClick={(e) => {e.preventDefault(); this.playTrack(""); }}> Play </Button>
+              <Button className="btn" onClick={(e) => {e.preventDefault(); this.nextTrack(); }}>&gt;&gt;</Button>
+              <br/><br/>
             </div>
           )}
 
@@ -559,16 +546,14 @@ class App extends Component {
                 cocktailDirections={this.state.cocktail.data.directions}
                 cocktailImg={this.state.cocktail.data.img}
               />
-              <br/><br/>
-              <Button id="new-cocktail" className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.handleSubmit(e, this.state.nowPlaying.artists[0].name)}}>Get New Cocktail</Button>
-              <br/><br/>
+              <Button id="new-cocktail" className="btn btn-non-controls" onClick={(e) => {e.preventDefault(); this.handleSubmit(e, this.state.nowPlaying.artists[0].name)}}>Get New Cocktail</Button>
             </div>
           )}
           
           {!this.state.token && (
             <div>
               <br/>
-              <p className="normal-text">NOTE: If you do not already have Spotify streaming, open the web player at <a id="spotify-link" href="https://open.spotify.com/" target="_blank">https://open.spotify.com/</a> first and then click the button above.</p>
+              <p className="normal-text">NOTE: If Spotify is not already streaming, open the player at <a id="spotify-link" href="https://open.spotify.com/" target="_blank">https://open.spotify.com/</a> before clicking Login.</p>
             </div>
           )}
 
@@ -584,7 +569,7 @@ class App extends Component {
                cocktailGenres={this.state.cocktail.data.genres}
                updateCocktail={this.updateCocktail}
               />
-              <Button id="delete-cocktail" className="btn btn--loginApp-link" onClick={(e) => {e.preventDefault(); this.deleteCocktail();}}>DELETE</Button><br/><br/>
+              <Button id="delete-cocktail" className="btn btn-non-controls" onClick={(e) => {e.preventDefault(); this.deleteCocktail();}}>DELETE</Button>
               <NewCocktail
               nowPlaying={this.state.nowPlaying}
               cocktailName={this.state.newCocktailName}

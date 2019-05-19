@@ -55,6 +55,7 @@ router.get('/', async (req, res) => {
       status: 200,
     });
   } catch (err) {
+    console.log(err);
     res.json({
       status: 500,
       data: err,
@@ -97,8 +98,6 @@ router.get('/', async (req, res) => {
 // CREATE ROUTE
 router.post('/', async (req, res) => {
   try {
-    console.log(req.body);
-
     // handle genres for new cocktail
     const temp = req.body.genres;
     req.body.genres = [];
@@ -110,6 +109,7 @@ router.post('/', async (req, res) => {
       data: newCocktail,
     });
   } catch (err) {
+    console.log(err);
     res.json({
       status: 500,
       data: err,
@@ -147,8 +147,6 @@ router.put('/', async (req, res) => {
     req.body.genres = [];
     req.body.genres.push(temp);
 
-    console.log(req.body);
-
     const updatedCocktail = await Cocktail.findByIdAndUpdate(req.body._id, req.body, { new: true });
     await updatedCocktail.save();
     res.json({
@@ -156,6 +154,7 @@ router.put('/', async (req, res) => {
       data: updatedCocktail,
     });
   } catch (err) {
+    console.log(err);
     res.json({
       status: 500,
       data: err,
@@ -167,13 +166,13 @@ router.put('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const deletedCocktail = await Cocktail.findByIdAndDelete(req.params.id);
-    console.log(deletedCocktail);
 
     res.json({
       status: 200,
       data: deletedCocktail,
     });
   } catch (err) {
+    console.log(err);
     res.json({
       status: 500,
       data: err,
@@ -218,8 +217,8 @@ router.post('/search', async (req, res) => {
       // random mongoDB item from collection found on stack overflow
       const count = await Cocktail.count({});
       randomCocktailIndex = Math.floor(Math.random() * count);
-      matchingCocktail = await Cocktail.findOne().skip(randomCocktailIndex).exec();
-      console.log('No matching cocktails so returning a random one!');
+      matchingCocktail = await Cocktail.findOne().skip(randomCocktailIndex);
+      console.log('No matching cocktails, returning a random one!');
     } else { // return one of the cocktails that is matching the genres
       randomCocktailIndex = Math.floor(Math.random() * allMatchingCocktails.length);
       matchingCocktail = allMatchingCocktails[randomCocktailIndex];
